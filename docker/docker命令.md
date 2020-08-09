@@ -1,24 +1,3 @@
-1. 查看容器日志  
-   docker logs -ft --tail 行数 容器名称
-   -f：跟踪实时日志
-
-   -t：显示时间戳
-
-~~~she
-sudo docker logs -f -t --tail 50 redis
-~~~
-
-
-
-2. 查看本地镜像
-   docker images
-
-~~~shell
-
-~~~
-
-
-
 # 仓库
 
 仓库类似git的的仓库，用于保存docker镜像。
