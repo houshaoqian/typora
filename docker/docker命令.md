@@ -132,7 +132,7 @@ sudo docker logs -f -t --tail 50 redis
 
    docker export <容器名称|容器ID>  > <文件路径> 导出的文件即为镜像文件，必须导入到本地镜像库中才能使用
 
-   cat <文件路径> | docker import <镜像名称:版本>
+   cat <文件路径> | docker import  - <镜像名称:版本> 中间符号"-"不能省略
 
    ~~~she
    # 导出容器
