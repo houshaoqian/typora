@@ -214,6 +214,5 @@ sudo docker rm -f redis-${port}
 sudo rm -rf ${port}
 done
 
-
 ~~~
 
