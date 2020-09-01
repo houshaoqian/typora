@@ -1,8 +1,8 @@
 ~~~shell
-docker run \
--v \d\data\docker\mysql-signle\etc:/etc/mysql \
--v \d\data\docker\mysql-signle\logs:/var/log/mysql \
--v \d\data\docker\mysql-signle\data:/var/lib/mysql \
+sudo docker run \
+-v /data/docker/mysql-signle/etc:/etc/mysql \
+-v /data/docker/mysql-signle/logs:/var/log/mysql \
+-v /data/docker/mysql-signle/data:/var/lib/mysql \
 -p 3306:3306 --name mysql-signle \
 -e MYSQL_ROOT_PASSWORD=123456 \
 --restart always \
@@ -10,3 +10,4 @@ docker run \
 ~~~
 
 default machine with IP 192.168.99.100
+
