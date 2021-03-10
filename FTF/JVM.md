@@ -7,7 +7,7 @@
 
 #### Tomcat类加载顺序
 
-![Tomcat类加载设计图](../img/tomcat-classLoader.png)
+![Tomcat类加载设计图](./img/tomcat-classLoader.png)
 
 1. 在JVM的基础上进行了封装和定制，新增了几个类加载器：Bootstrap、System、Common、webapp。
 
