@@ -92,3 +92,51 @@ mysql怎么实现的事务，分库分表的实现方式。
 
 
 
+
+
+
+
+1)TCP的三次握手和四次挥手过程，为什么是三次握手不是两次或者四次，还有过程中处于的每个状态的名称
+
+三次握手：
+
+1. client(closed->syn-sent) ----SYN=1 seq=x---->  server(closed->listen)。
+2.  server(listen->syn-rcvd)----SYN=1 ACK=1 seq=y, ack=x+1----->client(syn-sent)。
+3. (client(syn-sent->estab-lished)) --ACK=1 seq=x+1 ack=y+1 server(listen->->estab-lished)
+
+四次挥手：
+
+2）HTTP协议与TCP协议的区别
+
+HTTP是应用层协议，TCP是传输层协议。Http是基于TCP之上的协议。
+
+3）HTTP协议与HTTPS协议的区别
+
+两者都是无状态的协议，Https是一种加密协议。当初次建立链接时，会采用公钥认证方式识别对方身份。身份认证成功后，基于对称加密算法，进行加密通信。
+
+4）一个用户从客户端向服务端发送信息是怎么保持状态信息（大概这个意思吧有点忘了），具体逻辑是怎么设计的。
+
+基于cookie和session。禁用的情况下是根据URL后边携带sessionid参数。
+
+5）会网络编程吗（忘了。。。。）
+
+6）怎么创建线程
+
+继承Thread或者实现runnable。或者是线程池。本质上都是Thread的子类。
+
+7）线程和进程的区别
+
+进程是
+
+8）启动一个应用程序时候有几条进程，从java的角度讲（我也不知道答案是啥）
+9）Java怎么连接数据库的，说一下详细步骤
+10）JVM的垃圾回收
+
+11）类的加载过程
+
+
+
+
+
+
+
