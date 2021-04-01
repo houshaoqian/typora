@@ -18,5 +18,5 @@ docker network create --driver bridge --subnet 172.18.0.0/16 self_network
 | 172.18.0.10 | kafka-server-1 | kafka集群节点     | 9092-9092    |
 | 172.18.0.11 | kafka-server-2 | kafka集群节点     | 9093-9092    |
 | 172.18.0.12 | kafka-server-3 | kafka集群节点     | 9094-9092    |
-|             |                |                   |              |
+| 172.18.0.13 | redis          | redis单节点       |              |
 
