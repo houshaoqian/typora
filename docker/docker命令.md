@@ -93,10 +93,10 @@
 
 5. 进入正在运行中的容器
 
-   docker -exec [options] <容器名称>
+   docker exec [options] <容器名称>
 
    ~~~she
-   docker -exec -it redis
+   docker exec -it redis
    ~~~
 
 6. 查看容器日志
