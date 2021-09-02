@@ -1,5 +1,7 @@
+
+
 ~~~shell
-# 查看已安装的软件
+								# 查看已安装的软件
 dpkg -l #打印所有
 dpkg -l | grep <name> #过滤name
 
