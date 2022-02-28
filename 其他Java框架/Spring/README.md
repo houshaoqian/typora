@@ -247,3 +247,91 @@
    > 是指在不改变原有对象的基础上，将功能附加到对象上，提供了比继承更有弹性的方案，相当于扩展了原有对象的功能。属于结构型模式。java中的I/O流相关的类就是装饰者模式，比如BufferReader、InputStream、OutputStream等。Spring中的BeanDefinitionWrapper也属于装饰模式，扩展了BeanDefiniton的功能。
 
 10. 观察者模式
+
+    > ​	观察者模式定义了对象之间的一对多依赖，让多个观察者对象同时监听一个主体对象，当被监听对象发生变化或主动发送通知时，他的所有依赖（观察者）都会收到通知，属于行为模式。观察者模式也叫发布订阅模式。
+    >
+    > ​	在Spring中的应用，首先定义了几个顶级接口：
+    >
+    > 1. ApplicationEvent（事件）
+    >
+    >    ~~~java
+    >    public abstract class ApplicationEvent extends EventObject {
+    >
+    >    	/** System time when the event happened. */
+    >    	private final long timestamp;
+    >
+    >    	/**
+    >    	 * Create a new {@code ApplicationEvent}.
+    >    	 * @param source the object on which the event initially occurred or with
+    >    	 * which the event is associated (never {@code null})
+    >    	 */
+    >    	public ApplicationEvent(Object source) {
+    >    		super(source);
+    >    		this.timestamp = System.currentTimeMillis();
+    >    	}
+    >
+    >    	/**
+    >    	 * Return the system time in milliseconds when the event occurred.
+    >    	 */
+    >    	public final long getTimestamp() {
+    >    		return this.timestamp;
+    >    	}
+    >    }
+    >    ~~~
+    >
+    > 2. ApplicationListener（事件监听器），观察者。
+    >
+    >    ~~~java
+    >    @FunctionalInterface
+    > public interface ApplicationListener<E extends ApplicationEvent> extends EventListener {
+    >    
+    >    	/**
+    >    	 * 定义了对监听到事件后的处理逻辑。
+    >    	 */
+    > 	void onApplicationEvent(E event);
+    >    
+    >    }
+    >    ~~~
+    >    
+    > 3. ApplicationEventMulticaster（广播器），负责将事件发布出去。
+    >
+    >    ~~~java
+    >    public interface ApplicationEventMulticaster {
+    >    
+    >    	/**
+    >    	 * 添加一个监听器。
+    >    	 */
+    >    	void addApplicationListener(ApplicationListener<?> listener);
+    >    
+    >    	/**
+    >    	 * 将事件广播出去，所有的监听器都会收到该事件。
+    >    	 */
+    >    	void multicastEvent(ApplicationEvent event);
+    >    
+    >    	/**
+    >    	 * 精准地将事件广播出去，只有监听了指定类型（ResolvableType）事件的监听器才会收到该事件。
+    >    	 */
+    >    	void multicastEvent(ApplicationEvent event, @Nullable ResolvableType eventType);
+    >    
+    >    }
+    >    ~~~
+    >
+    >    ApplicationEventMulticaster广播器的广播实现逻辑，其实就是获取所有已注册的监听器，循环调用对应的事件处理逻辑onApplicationEvent()。比如在实现类SimpleApplicationEventMulticaster中的广播实现逻辑如下：
+    >
+    >    ~~~java
+    >    	@Override
+    >    	public void multicastEvent(final ApplicationEvent event, @Nullable ResolvableType eventType) {
+    >    		ResolvableType type = (eventType != null ? eventType : resolveDefaultEventType(event));
+    >    		// 开了一个线程池去处理事件。
+    >            Executor executor = getTaskExecutor();
+    >    		for (ApplicationListener<?> listener : getApplicationListeners(event, type)) {
+    >    			if (executor != null) {
+    >    				executor.execute(() -> invokeListener(listener, event));
+    >    			}
+    >    			else {
+    >    				invokeListener(listener, event);
+    >    			}
+    >    		}
+    >    	}
+    >    ~~~
+    >
