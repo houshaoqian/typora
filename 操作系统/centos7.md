@@ -2,9 +2,7 @@
 
 ~~~shell
 # 修改主机名称
-hostnmaectl set-hostname centos01
-
-
+hostnamectl set-hostname centos01
 ~~~
 
 
