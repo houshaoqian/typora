@@ -71,12 +71,32 @@ factory工厂相关定义：
 * ApplicationEvent，对容器中所有事件的抽象，比如容器启动，刷新，停止等。
 * ApplicationEventPublisher，用于ApplicationContext事件发布。
 * ApplicationListener，用于监听ApplicationContext事件。和ApplicationEvent、ApplicationEventPublisher共同构成了事件通知机制，用于Spring内部和应用程序级别的流程通知和控制。
-
 * @Bean，通过注解方式定义Bean。
 * @ComponentScans，扫描Bean定义规则。
 * Lifecycle，对应用上下文的生命周期的抽象（start，stop，isRunning）。
 * LifecycleProcessor，继承自Lifecycle，用于应用上下文的启动（#onRefresh，自动注册各组件component等）和停止（#onClose，卸载注册组件component等）时的通知。
 * MessageSource，国际化配置的工具类。
+
+stereotype相关的定义
+
+
+* Component
+* Controller
+* Indexed
+* Repository
+* Service
+
+scheduling相关的定义
+
+* @Async：标识方法为异步执行（加入线程池执行）。
+* @EnableAsync：标识在bean上，使得当前Ioc容器能够识别@Async注解。
+* @Scheduled：标识方法定时执行策略。
+* @EnableScheduling：标识在bean上，使得当前Ioc容器能够识别@Scheduled注解。
+* @Schedules：@Scheduled的复数形式，同时定义多个执行策略。
+* @SchedulingConfigurer：
+* Trigger：
+* TaskScheduler：
+* TriggerContext：
 
 ### spring-expression
 
