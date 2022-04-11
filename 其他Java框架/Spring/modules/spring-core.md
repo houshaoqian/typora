@@ -38,11 +38,12 @@ DI依赖注入相关功能定义：
 * @Lookup，
 * @Value,
 
-factory工厂相关功能定义：
+factory工厂相关功能Bean定义：
 
 * BeanDefinition，Bean元数据的定义。
 * BeanDefinitionHolder，BeanDefinition的扩展类，在保存原数据的前提下，提供额外信息，比如别名，定义Bean的数据源等。
 * ObjectFactory，是Bean的工厂方法，强调的是Bean的实例化封装，是否返回新实例等。比如单例类型Bean会通过Scope来返回已经创建的对象，原型类型则每次都创建一个新的实例。
+* BeanWrapper，BeanDefinition的包装类。
 * FactoryBean，在实例化(doGetBean)的时候有特殊调用(该类型的实例化结果返回的是getObject()类型而非其本身)。
 * BeanFactory，核心Ioc容器。在功能实现上是内部持有一个BeanFactory子类来实现的(组合模式)。因各个Bean的生命周期Scope不同，因此各Bean的存储位置也不同。
      单例模式(signle)：保存在DefaultSingletonBeanRegistry(singletonObjects)中.单例有三级缓存，参考getSingleton()方法。
@@ -50,7 +51,7 @@ factory工厂相关功能定义：
      其他模式：包括request session等,该模式采用的是通过全局的不同类型的Scope(SessionScope,RequestScope)对象来保存实例。
 * Scope，生命周期抽象类。
 
-流程相关功能定义：
+流程相关功能Bean定义：
 
 * BeanPostProcessor，Bean的后置处理器，提供在Bean实例化前和实例化后进行其他逻辑上的扩展，主要用在业务逻辑上的扩展。
 * BeanFactoryPostProcessor，BeanFactory的后置处理器。主要用于Spring内部不同BeanFactory实现的特殊处理。
@@ -59,11 +60,27 @@ factory工厂相关功能定义：
   2. InitializingBean#afterPropertiesSet 
   3. BeanPostProcessor#postProcessAfterInitialization
 
-
 ### spring-context
+
+​	依赖spring-core，spring-beans，spring-aop，spring-expression模块。主要定义了高级Ioc容器（即ApplicationContext，应用上下文）相关接口。
+
+factory工厂相关定义：
+
+* ApplicationContext，BeanFactory的高级形态，继承自BeanFactory。
+* ApplicationContextInitializer，用于ApplicationContext初始化时回调接口。
+* ApplicationEvent，对容器中所有事件的抽象，比如容器启动，刷新，停止等。
+* ApplicationEventPublisher，用于ApplicationContext事件发布。
+* ApplicationListener，用于监听ApplicationContext事件。和ApplicationEvent、ApplicationEventPublisher共同构成了事件通知机制，用于Spring内部和应用程序级别的流程通知和控制。
+
+* @Bean，通过注解方式定义Bean。
+* @ComponentScans，扫描Bean定义规则。
+* Lifecycle，对应用上下文的生命周期的抽象（start，stop，isRunning）。
+* LifecycleProcessor，继承自Lifecycle，用于应用上下文的启动（#onRefresh，自动注册各组件component等）和停止（#onClose，卸载注册组件component等）时的通知。
+* MessageSource，国际化配置的工具类。
 
 ### spring-expression
 
 ### spring-context-support
 
 ### spring-context-indexer
+
