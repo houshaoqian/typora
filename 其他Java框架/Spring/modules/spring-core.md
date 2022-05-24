@@ -98,6 +98,29 @@ scheduling相关的定义
 * TaskScheduler：
 * TriggerContext：
 
+Spring5条件化配置相关定义
+
+* @Condition：Conditional注解的参数类型，标识一个布尔值类型的表达式。
+* @Conditional： 条件化话注解。可以包含多个Condition（多个时，需用大括号括起来）。
+* @Import：同xml配置中的<import/>标签，①引入由@Configuration注解的类②ImportSelector和ImportBeanDefinitionRegistrar的实现类③将普通的POJO注册成Spring Bean。
+* ImportSelector：
+
+Tips：Spring已经提供的条件化注解
+
+> @ConditionalOnBean：仅仅在当前上下文中存在某个对象时，才会实例化一个Bean。
+> @ConditionalOnClass：某个class位于类路径上，才会实例化一个Bean。
+> @ConditionalOnExpression：当表达式（EL表达式或者常量）为true的时候，才会实例化一个Bean。
+> @ConditionalOnMissingBean：仅仅在当前上下文中不存在某个对象时，才会实例化一个Bean。
+> @ConditionalOnMissingClass：某个class类路径上不存在的时候，才会实例化一个Bean。
+> @ConditionalOnNotWebApplication：不是web应用，才会实例化一个Bean。
+> @ConditionalOnBean：当容器中有指定Bean的条件下进行实例化。
+> @ConditionalOnMissingBean：当容器里没有指定Bean的条件下进行实例化。
+> @ConditionalOnProperty：当指定的属性有指定的值时进行实例化。
+> @ConditionalOnJava：当JVM版本为指定的版本范围时触发实例化。
+> @ConditionalOnResource：当类路径下有指定的资源时触发实例化。
+> @ConditionalOnJndi：在JNDI存在的条件下触发实例化。
+> @ConditionalOnSingleCandidate：当指定的Bean在容器中只有一个，或者有多个但是指定了首选的Bean时触发实例化。
+
 ### spring-expression
 
 ### spring-context-support
