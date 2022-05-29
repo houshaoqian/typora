@@ -67,7 +67,7 @@ factory工厂相关功能Bean定义：
 factory工厂相关定义：
 
 * ApplicationContext，BeanFactory的高级形态，继承自BeanFactory。
-* ApplicationContextInitializer，用于ApplicationContext初始化时回调接口。
+* ApplicationContextInitializer，它是一个回调接口，主要目的是允许用户在ConfigurableApplicationContext类型（或其子类型）的ApplicationContext做refresh方法调用刷新之前，对ConfigurableApplicationContext实例做进一步的设置或处理。通常用于应用程序上下文进行编程初始化的Web应用程序中。
 * ApplicationEvent，对容器中所有事件的抽象，比如容器启动，刷新，停止等。
 * ApplicationEventPublisher，用于ApplicationContext事件发布。
 * ApplicationListener，用于监听ApplicationContext事件。和ApplicationEvent、ApplicationEventPublisher共同构成了事件通知机制，用于Spring内部和应用程序级别的流程通知和控制。
