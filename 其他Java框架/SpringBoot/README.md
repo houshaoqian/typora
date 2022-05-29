@@ -144,11 +144,85 @@ protected AutoConfigurationEntry getAutoConfigurationEntry(AutoConfigurationMeta
 
 ## SpringBoot启动流程
 
+SpringBoot启动流程分为两个步骤。
+
+1. SpringApplication实例化。
+2. Spring Ioc容器启动。
+
+------
+
+### SpringApplication启动类实例化
+
+~~~java
+public SpringApplication(Class<?>... primarySources) {
+    this(null, primarySources);
+}
+public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
+    this.resourceLoader = resourceLoader;
+    Assert.notNull(primarySources, "PrimarySources must not be null");
+    this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+    this.webApplicationType = WebApplicationType.deduceFromClasspath();
+    setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+    setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+    this.mainApplicationClass = deduceMainApplicationClass();
+}
+~~~
+
+实例化流程：
+
+1. 参数赋值，resourceLoader资源加载器（默认为空，不指定），primarySources启动类。
+
+   > 构造函数的参数为Class类型，因此启动类可以是非当前mian方法所在的类（任何被@SpringBootApplication注解的类都可以）。
+
+2. 推断应用类型（REACTIVE/NONE/SERVLET）。
+
+   > 1. 应用类型通过枚举类型WebApplicationType（REACTIVE响应式、NONE普通、SERVLET web应用）表示。
+   >
+   > 2. 推断逻辑主要依靠ClassUtils.isPresent()方法，即判断classpath是否存在对应的类有，判断逻辑如下：
+   >
+   >    > ①存在org.springframework.web.reactive.DispatcherHandler类且不存在org.springframework.web.servlet.DispatcherServlet 和 org.glassfish.jersey.servlet.ServletContainer的类是响应式REACTIVE应用。
+   >    >
+   >    > ②不存在javax.servlet.Servlet和org.springframework.web.context.ConfigurableWebApplicationContext的是普通应用。
+   >    >
+   >    > ③其他的都是web应用SERVLET。
+
+3. 获取ApplicationContextInitializer类集合并设置对应属性值。
+
+   > 1. 从spring.factories缓存中获取ApplicationContextInitializer类型的集合。
+   > 2. 将上述集合赋值到SpringApplication#initializers属性上。
+   > 3. ApplicationContextInitializer类是Spring应用的一个回调接口，应用在ConfigurableApplicationContext类型（或其子类型）的ApplicationContext做refresh方法调用刷新之前，对ConfigurableApplicationContext实例做进一步的设置或处理。通常用于应用程序上下文进行编程初始化的Web应用程序中。
+
+4. 获取ApplicationListener类集合并设置对应属性值。
+
+   > 1. 从spring.factories缓存中获取ApplicationListener类型的集合。
+   > 2. 将上述集合赋值到SpringApplication#listeners属性上。
+   > 3. ApplicationListener类是Spring应用监听器。当Spring容器事件ApplicationEvent发布之后，需要处理特定事件时，如数据的加载、初始化缓存、特定任务的注册等操作。而在此阶段，更多的是用于ApplicationContext管理Bean过程的场景。
+
+5. 推断入口类并设置对应属性的值。SpringApplication#mainApplicationClass值。
+
+   ~~~java
+   private Class<?> deduceMainApplicationClass() {
+       try {
+           StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
+           for (StackTraceElement stackTraceElement : stackTrace) {
+               if ("main".equals(stackTraceElement.getMethodName())) {
+                   return Class.forName(stackTraceElement.getClassName());
+               }
+           }
+       }
+       catch (ClassNotFoundException ex) {
+       }
+       return null;
+   }
+   ~~~
 
 
 
+------
 
+### SpringBoot启动流程
 
+SpringBoot启动流程是指SpringApplication#run()方法运行的过程。
 
 ------
 
