@@ -235,3 +235,4 @@ spring.factories文件：位于各个jar包的/META-INF文件下，可配置的�
 
 @EnableConfigurationProperties和@ConfigurationProperties搭配实现属性注入。
 
+SimpleCommandLinePropertySource类的用法 可用作 输入参数的工具类。
