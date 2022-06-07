@@ -147,7 +147,7 @@ protected AutoConfigurationEntry getAutoConfigurationEntry(AutoConfigurationMeta
 SpringBoot启动流程分为两个步骤。
 
 1. SpringApplication实例化。
-2. Spring Ioc容器启动。
+2. Spring Ioc容器启动，即SpringApplication#run的运行。
 
 ------
 
@@ -168,7 +168,7 @@ public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySourc
 }
 ~~~
 
-实例化流程：
+SpringApplication实例化流程：
 
 1. 参数赋值，resourceLoader资源加载器（默认为空，不指定），primarySources启动类。
 
@@ -180,11 +180,11 @@ public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySourc
    >
    > 2. 推断逻辑主要依靠ClassUtils.isPresent()方法，即判断classpath是否存在对应的类有，判断逻辑如下：
    >
-   >    > ①存在org.springframework.web.reactive.DispatcherHandler类且不存在org.springframework.web.servlet.DispatcherServlet 和 org.glassfish.jersey.servlet.ServletContainer的类是响应式REACTIVE应用。
+   >    > 1. 存在org.springframework.web.reactive.DispatcherHandler类且不存在org.springframework.web.servlet.DispatcherServlet 和 org.glassfish.jersey.servlet.ServletContainer的类是响应式REACTIVE应用。
    >    >
-   >    > ②不存在javax.servlet.Servlet和org.springframework.web.context.ConfigurableWebApplicationContext的是普通应用。
+   >    > 2. 不存在javax.servlet.Servlet和org.springframework.web.context.ConfigurableWebApplicationContext的是普通应用。
    >    >
-   >    > ③其他的都是web应用SERVLET。
+   >    > 3. 其他的都是web应用SERVLET。
 
 3. 获取ApplicationContextInitializer类集合并设置对应属性值。
 
@@ -200,7 +200,7 @@ public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySourc
 
 5. 推断入口类并设置对应属性的值。SpringApplication#mainApplicationClass值。
 
-   ~~~java
+~~~java
    private Class<?> deduceMainApplicationClass() {
        try {
            StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
@@ -214,7 +214,7 @@ public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySourc
        }
        return null;
    }
-   ~~~
+~~~
 
 
 
@@ -222,7 +222,77 @@ public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySourc
 
 ### SpringBoot启动流程
 
-SpringBoot启动流程是指SpringApplication#run()方法运行的过程。
+SpringBoot启动流程是指SpringApplication#run方法的运行过程。
+
+~~~java
+public ConfigurableApplicationContext run(String... args) {
+		StopWatch stopWatch = new StopWatch();
+		stopWatch.start();
+		ConfigurableApplicationContext context = null;
+		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
+		configureHeadlessProperty();
+		SpringApplicationRunListeners listeners = getRunListeners(args);
+		listeners.starting();
+		try {
+			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
+			configureIgnoreBeanInfo(environment);
+			Banner printedBanner = printBanner(environment);
+			context = createApplicationContext();
+			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class,
+					new Class[] { ConfigurableApplicationContext.class }, context);
+			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+			refreshContext(context);
+			afterRefresh(context, applicationArguments);
+			stopWatch.stop();
+			if (this.logStartupInfo) {
+				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);
+			}
+			listeners.started(context);
+			callRunners(context, applicationArguments);
+		}
+		catch (Throwable ex) {
+			handleRunFailure(context, ex, exceptionReporters, listeners);
+			throw new IllegalStateException(ex);
+		}
+
+		try {
+			listeners.running(context);
+		}
+		catch (Throwable ex) {
+			handleRunFailure(context, ex, exceptionReporters, null);
+			throw new IllegalStateException(ex);
+		}
+		return context;
+	}
+~~~
+
+1. 获取监听器。从spring.factories文件中获取获取监听器，获取过程同XXXAutoConfiguration。也可以通过SpringApplication#setListeners设置监听器。两种方法区别，叠加还是覆盖???。
+
+   > SpringApplicationRunListener监听器，该接口定义了SpringBoot的启动过程中的**7种**状态，按照时间先后顺序分别为starting、environmentPrepared、contextPrepared、contextLoaded、started、running、failed。SpringBoot中只定义了一个实现类EventPublishingRunListener。
+
+2. 封装参数配置ApplicationArguments实例对象。
+
+   > ApplicationArguments类组合了Source类，而Source类是SimpleCommandLinePropertySource的子类，可以从main(string [] args)参数中获取java标准参数值。比如 '--name=zs --age=16' 可以获取到对应name和age的值。其中'-'表示是JVM级参数，此处是获取不到的，'--'是应用级参数。
+
+3. 初始化环境Environment。环境Environment和配置源PropertySources的区别是PropertySources是载体，配置中的所有属性值都保存在PropertySources中，Environment根据激活状态和优先级取不同PropertySources的内容。
+
+   > 1. 获取或创建Environment对象。当SpringApplication#environment为不为空直接返回该实例值，为空时，根据当前应用类型WebApplicationType创建Environment对应子类型实例。当为servlet类型时，在创建StandardServletEnvironment实例时，会在实例化(父类构造函数调用#customizePropertySources方法)时默认添加四个PropertySources配置源，按照从高到低优先级分别是servletConfigInitParams、servletContextInitParams、systemProperties和systemEnvironment。
+   >
+   > 2. 配置Environment。配置的内容主要包括转换服务、PropertySources、和activeProfiles。
+   >
+   > 3. 转换服务ApplicationConversionService。单例模式，默认开启(this.addConversionService=true)。该类的主要作用是参数的转换。
+   >
+   > 4. 配置源PropertySources。在概念上一个PropertySource代表了一个.properties或者.yml配置文件。此处使用的是其子类MutablePropertySources代表了多个配置源文件，此处配置的目的是多个配置源进行优先级的排序。排序规则如下：
+   >
+   >    > 1. 如果默认PropertySource配置源this.defaultProperties不为空，则将其放在集合最后，代表优先级最低，其key=defaultProperties。可以通过SpringApplication#setDefaultProperties方法设置默认PropertySource配置源。
+   >    > 2. 如果命令参数存在则会出现两种情况：如果配置源中已存在key为'commandLineArgs'的配置源项，则使用CompositePropertySource类进行相同name的参数处理；如果命令的参数并不存在于属性配置中，则新增key为''commandLineArgs''的配置项，直接将其设置为优先级最高，并将命令参数保存在改配置源PropertySource中。
+
+4. 设置profiles的激活状态。从配置源PropertySources中获取'spring.profiles.active'的值。
+
+------
+
+分隔符
 
 ------
 
@@ -233,6 +303,16 @@ spring.factories文件：位于各个jar包的/META-INF文件下，可配置的�
 
 
 
+------
+
+Spring中常用工具类
+
+> 1. StringUtils#delimitedListToStringArray
+> 2. 
+
 @EnableConfigurationProperties和@ConfigurationProperties搭配实现属性注入。
 
 SimpleCommandLinePropertySource类的用法 可用作 输入参数的工具类。
+
+AbstractEnvironment#validateProfile校验profiles中单独指出不能以'!'开头的原因？
+
