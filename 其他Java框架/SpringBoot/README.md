@@ -50,7 +50,7 @@ public @interface EnableAutoConfiguration {
 4. excludeName作用同exclude，通过全类名进行排除。
 5. @Import注解功能同xml文件中的<import/>标签，可以导入@Configuration配置类、ImportSelector实现类、普通的POJO等注册为Spring Bean。
 
-> spring.factories文件：位于各个jar包的/META-INF文件下（该文件的也可以配置其他待注册的类型，AutoConfigurationImportFilter、AutoConfigurationImportListener、AutoConfigurationImportListener、ApplicationContextInitializer、ApplicationListener等）。
+> spring.factories文件：位于各个jar包的/META-INF文件下（该文件的也可以配置其他待注册的类型，AutoConfigurationImportFilter、AutoConfigurationImportListener、AutoConfigurationImportListener、ApplicationContextInitializer、ApplicationListener、SpringBootExceptionReporter等）。
 
 
 
@@ -190,7 +190,7 @@ SpringApplication实例化流程：
 
    > 1. 从spring.factories缓存中获取ApplicationContextInitializer类型的集合。
    > 2. 将上述集合赋值到SpringApplication#initializers属性上。
-   > 3. ApplicationContextInitializer类是Spring应用的一个回调接口，应用在ConfigurableApplicationContext类型（或其子类型）的ApplicationContext做refresh方法调用刷新之前，对ConfigurableApplicationContext实例做进一步的设置或处理。通常用于应用程序上下文进行编程初始化的Web应用程序中。
+   > 3. ApplicationContextInitializer类是Spring应用的初始化回调接口，应用在ConfigurableApplicationContext类型（或其子类型）的ApplicationContext做refresh方法调用刷新之前，对ConfigurableApplicationContext实例做进一步的设置或处理。通常用于应用程序上下文进行编程初始化的Web应用程序中。
 
 4. 获取ApplicationListener类集合并设置对应属性值。
 
@@ -275,7 +275,7 @@ public ConfigurableApplicationContext run(String... args) {
 
    > ApplicationArguments类组合了Source类，而Source类是SimpleCommandLinePropertySource的子类，可以从main(string [] args)参数中获取java标准参数值。比如 '--name=zs --age=16' 可以获取到对应name和age的值。其中'-'表示是JVM级参数，此处是获取不到的，'--'是应用级参数。
 
-3. 初始化环境Environment。环境Environment和配置源PropertySources的区别是PropertySources是载体，配置中的所有属性值都保存在PropertySources中，Environment根据激活状态和优先级取不同PropertySources的内容。
+3. 准备环境Environment。环境Environment和配置源PropertySources的区别是PropertySources是载体，配置中的所有属性值都保存在PropertySources中，Environment根据激活状态和优先级取不同PropertySources的内容。
 
    > 1. 获取或创建Environment对象。当SpringApplication#environment为不为空直接返回该实例值，为空时，根据当前应用类型WebApplicationType创建Environment对应子类型实例。当为servlet类型时，在创建StandardServletEnvironment实例时，会在实例化(父类构造函数调用#customizePropertySources方法)时默认添加四个PropertySources配置源，按照从高到低优先级分别是servletConfigInitParams、servletContextInitParams、systemProperties和systemEnvironment。
    >
@@ -287,8 +287,25 @@ public ConfigurableApplicationContext run(String... args) {
    >
    >    > 1. 如果默认PropertySource配置源this.defaultProperties不为空，则将其放在集合最后，代表优先级最低，其key=defaultProperties。可以通过SpringApplication#setDefaultProperties方法设置默认PropertySource配置源。
    >    > 2. 如果命令参数存在则会出现两种情况：如果配置源中已存在key为'commandLineArgs'的配置源项，则使用CompositePropertySource类进行相同name的参数处理；如果命令的参数并不存在于属性配置中，则新增key为''commandLineArgs''的配置项，直接将其设置为优先级最高，并将命令参数保存在改配置源PropertySource中。
+   >    
+   > 5. 设置profiles的激活状态。从配置源PropertySources中获取'spring.profiles.active'的值。
 
-4. 设置profiles的激活状态。从配置源PropertySources中获取'spring.profiles.active'的值。
+4. 配置忽略BeanInfo类的扫描。BeanInfo是Java语言对符合JavaBean规范的抽象（java自省机制.参考jdk的Introspector和spring对BeanInfo接口的扩展类ExtendedBeanInfo）。
+
+5. 打印banner。banner默认为资源文件夹resource下名为banner.txt的文件。
+
+6. 创建Spring应用上下文。如果当前应用上下文不为空（默认为空，可通过SpringApplication#setApplicationContextClass设置），根据'SpringApplication实例化'流程中的'推断应用类型'的结果实例化对应的类。
+
+7. 初始化SpringBoot异常处理类SpringBootExceptionReporter的实例。初始逻辑同spring.factory中其他类型。当SpringBoot启动异常时，回调该实例进行异常处理。
+
+8. 准备应用上下文。Spring应用上下文（或者容器）启动前的准备工作，包括以下内容。
+
+   > 1. 应用上下文 设置/关联 之前流程已初始化的环境Environment。其中关联Environment的有Environment本身、BeanDefinitionReader 和 ClassPathBeanDefinitionScanner，后两项的作用主要体现在Bean的加载上。
+   > 2. 应用上下文后置处理器的回调。该方法在SpringApplication中定义为protected，因此子类可以重写该方法，实现更多逻辑处理。默认实现的处理逻辑主要是向容器注册几个单例类型的bean，包括BeanNameGenerator名称生成器、ConversionService类型转换服务、ResourceLoader资源加载器。BeanNameGenerator名称生成器在不通过设置#setBeanNameGenerator指定具体实现类时，此处不会向容器注册。ResourceLoader资源加载器同样如此，只有ConversionService会进行注册关联。
+   > 3. 触发ApplicationContextInitializer回调接口。ApplicationContextInitializer的实例在SpringApplication的实例化过程中已经初始化完成。先对所有ApplicationContextInitializer实例进行排序后再进行回调。
+   > 4. SpringApplicationRunListener监听器广播contextPrepared事件。
+   > 5. 向容器注册springBootBanner。
+   > 6. Spring容器设置是否运行覆盖Spring bean。此处this.allowBeanDefinitionOverriding属性还未读取配置源PropertySource中'spring.main.allow-bean-definition-overriding'的值，因此默认为false。
 
 ------
 
@@ -300,6 +317,7 @@ spring.factories文件：位于各个jar包的/META-INF文件下，可配置的�
 
 1. 自动配置类：AutoConfigurationImportFilter、AutoConfigurationImportListener、AutoConfigurationImportListener。
 2. Ioc容器类：ApplicationContextInitializer、ApplicationListener。
+2. 其他类型：SpringBootExceptionReporter
 
 
 
