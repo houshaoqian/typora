@@ -283,11 +283,13 @@ public ConfigurableApplicationContext run(String... args) {
    >
    > 3. 转换服务ApplicationConversionService。单例模式，默认开启(this.addConversionService=true)。该类的主要作用是参数的转换。
    >
-   > 4. 配置源PropertySources。在概念上一个PropertySource代表了一个.properties或者.yml配置文件。此处使用的是其子类MutablePropertySources代表了多个配置源文件，此处配置的目的是多个配置源进行优先级的排序。排序规则如下：
+   > 4. 配置源PropertySources。在概念上一个PropertySource代表了一个配置源（可以是类名，包名，xml文件等）。此处使用的是其子类MutablePropertySources代表了多个配置源文件，此处配置的目的是多个配置源进行优先级的排序。排序规则如下：
    >
    >    > 1. 如果默认PropertySource配置源this.defaultProperties不为空，则将其放在集合最后，代表优先级最低，其key=defaultProperties。可以通过SpringApplication#setDefaultProperties方法设置默认PropertySource配置源。
    >    > 2. 如果命令参数存在则会出现两种情况：如果配置源中已存在key为'commandLineArgs'的配置源项，则使用CompositePropertySource类进行相同name的参数处理；如果命令的参数并不存在于属性配置中，则新增key为''commandLineArgs''的配置项，直接将其设置为优先级最高，并将命令参数保存在改配置源PropertySource中。
-   >    
+   >    >
+   >    > 解析Source的地方是BeanDefinitionLoader#load。此处会对Source类型进行校验，其具体的类型可以是Class、Resource、Package、CharSequence中的一种。
+   >
    > 5. 设置profiles的激活状态。从配置源PropertySources中获取'spring.profiles.active'的值。
 
 4. 配置忽略BeanInfo类的扫描。BeanInfo是Java语言对符合JavaBean规范的抽象（java自省机制.参考jdk的Introspector和spring对BeanInfo接口的扩展类ExtendedBeanInfo）。
@@ -306,6 +308,25 @@ public ConfigurableApplicationContext run(String... args) {
    > 4. SpringApplicationRunListener监听器广播contextPrepared事件。
    > 5. 向容器注册springBootBanner。
    > 6. Spring容器设置是否运行覆盖Spring bean。此处this.allowBeanDefinitionOverriding属性还未读取配置源PropertySource中'spring.main.allow-bean-definition-overriding'的值，因此默认为false。
+   > 6. 设置bean的懒加载模式。通过LazyInitializationBeanFactoryPostProcessor后置处理器，将容器中bean的符合条件的BeanDefinition设置为懒加载模式(lazyInit=false)。条件是指lazyInit=null，因此在Spring中bean默认为懒加载模式。
+   > 6. 加载所有Source配置源，采用不同方式对各种Source进行加载。配置源Source有两种添加方式，第一是默认的primarySources，Class类型，SpringApplication构造函数中的参数，一般是当前SpringBoot启动类。第二是通过SpringApplication#setSources手动配置。
+   > 6. SpringBoot广播器SpringApplicationRunListeners广播contextLoaded事件。
+   
+9. 应用启动。调用Spring的refresh()方法启动容器。
+
+10. 启动后置处理afterRefresh()。
+
+   > Tips：
+   >
+   > SpringApplication#afterRefresh()方法是protected类型且方法体为空，猜想可能是为了扩展SpringApplication类，在子类中重写该方法，以得到增强的该类的效果。
+
+11. SpringBoot广播器SpringApplicationRunListeners广播started事件。
+
+12. 回调Runner。Runner可以理解为SpringBoot容器回调(网上有人称为 "开机启动")。
+
+    > Runner有两种表现形式，ApplicationRunner和CommandLineRunner。两者无本质区别，唯一不同的是在对启动参数的处理上，从#run的入参也能看出端倪。CommandLineRunner的参数为原始的参数类型String... args，没有经过任何处理。ApplicationRunner则对参数做了进一步的封装类型ApplicationArguments。
+
+13. SpringBoot广播器SpringApplicationRunListeners广播running事件。
 
 ------
 
@@ -323,6 +344,18 @@ spring.factories文件：位于各个jar包的/META-INF文件下，可配置的�
 
 ------
 
+SpringBoot日志源码
+
+1. spring.factory中的监听器，LoggingApplicationListener,监听的事件有ApplicationStartingEvent、ApplicationEnvironmentPreparedEvent、ApplicationPreparedEvent、ContextClosedEvent、ApplicationFailedEvent。
+
+
+
+tip:
+
+​	区别一下SpringApplicationRunListener和ApplicationListener，前者相当于是广播器(通过内部成员initialMulticaster实现)，后者属于监听器，监听前者广播的事件并进行响应的处理，在日志加载过程中，前者在SpringBoot应用启动时，。
+
+------
+
 Spring中常用工具类
 
 > 1. StringUtils#delimitedListToStringArray
@@ -333,4 +366,6 @@ Spring中常用工具类
 SimpleCommandLinePropertySource类的用法 可用作 输入参数的工具类。
 
 AbstractEnvironment#validateProfile校验profiles中单独指出不能以'!'开头的原因？
+
+-------
 
