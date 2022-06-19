@@ -275,22 +275,22 @@ public ConfigurableApplicationContext run(String... args) {
 
    > ApplicationArguments类组合了Source类，而Source类是SimpleCommandLinePropertySource的子类，可以从main(string [] args)参数中获取java标准参数值。比如 '--name=zs --age=16' 可以获取到对应name和age的值。其中'-'表示是JVM级参数，此处是获取不到的，'--'是应用级参数。
 
-3. 准备环境Environment。环境Environment和配置源PropertySources的区别是PropertySources是载体，配置中的所有属性值都保存在PropertySources中，Environment根据激活状态和优先级取不同PropertySources的内容。
+3. 准备环境Environment。环境Environment和属性源PropertySources的区别是PropertySources是载体，配置中的所有属性值都保存在PropertySources中，Environment根据激活状态和优先级取不同PropertySources的内容。
 
-   > 1. 获取或创建Environment对象。当SpringApplication#environment为不为空直接返回该实例值，为空时，根据当前应用类型WebApplicationType创建Environment对应子类型实例。当为servlet类型时，在创建StandardServletEnvironment实例时，会在实例化(父类构造函数调用#customizePropertySources方法)时默认添加四个PropertySources配置源，按照从高到低优先级分别是servletConfigInitParams、servletContextInitParams、systemProperties和systemEnvironment。
+   > 1. 获取或创建Environment对象。当SpringApplication#environment为不为空直接返回该实例值，为空时，根据当前应用类型WebApplicationType创建Environment对应子类型实例。当为servlet类型时，在创建StandardServletEnvironment实例时，会在实例化(父类构造函数调用#customizePropertySources方法)时默认添加四个PropertySources属性源，按照从高到低优先级分别是servletConfigInitParams、servletContextInitParams、systemProperties和systemEnvironment。
    >
    > 2. 配置Environment。配置的内容主要包括转换服务、PropertySources、和activeProfiles。
    >
    > 3. 转换服务ApplicationConversionService。单例模式，默认开启(this.addConversionService=true)。该类的主要作用是参数的转换。
    >
-   > 4. 配置源PropertySources。在概念上一个PropertySource代表了一个配置源（可以是类名，包名，xml文件等）。此处使用的是其子类MutablePropertySources代表了多个配置源文件，此处配置的目的是多个配置源进行优先级的排序。排序规则如下：
+   > 4. 属性源PropertySources。在概念上一个PropertySource代表了一个属性源（可以是类名，包名，xml文件等）。此处使用的是其子类MutablePropertySources代表了多个属性源文件，此处配置的目的是多个属性源进行优先级的排序。排序规则如下：
    >
-   >    > 1. 如果默认PropertySource配置源this.defaultProperties不为空，则将其放在集合最后，代表优先级最低，其key=defaultProperties。可以通过SpringApplication#setDefaultProperties方法设置默认PropertySource配置源。
-   >    > 2. 如果命令参数存在则会出现两种情况：如果配置源中已存在key为'commandLineArgs'的配置源项，则使用CompositePropertySource类进行相同name的参数处理；如果命令的参数并不存在于属性配置中，则新增key为''commandLineArgs''的配置项，直接将其设置为优先级最高，并将命令参数保存在改配置源PropertySource中。
+   >    > 1. 如果默认PropertySource属性源this.defaultProperties不为空，则将其放在集合最后，代表优先级最低，其key=defaultProperties。可以通过SpringApplication#setDefaultProperties方法设置默认PropertySource属性源。
+   >    > 2. 如果命令参数存在则会出现两种情况：如果属性源中已存在key为'commandLineArgs'的属性源项，则使用CompositePropertySource类进行相同name的参数处理；如果命令的参数并不存在于属性配置中，则新增key为''commandLineArgs''的配置项，直接将其设置为优先级最高，并将命令参数保存在改属性源PropertySource中。
    >    >
    >    > 解析Source的地方是BeanDefinitionLoader#load。此处会对Source类型进行校验，其具体的类型可以是Class、Resource、Package、CharSequence中的一种。
    >
-   > 5. 设置profiles的激活状态。从配置源PropertySources中获取'spring.profiles.active'的值。
+   > 5. 设置profiles的激活状态。从属性源PropertySources中获取'spring.profiles.active'的值。
 
 4. 配置忽略BeanInfo类的扫描。BeanInfo是Java语言对符合JavaBean规范的抽象（java自省机制.参考jdk的Introspector和spring对BeanInfo接口的扩展类ExtendedBeanInfo）。
 
@@ -307,12 +307,12 @@ public ConfigurableApplicationContext run(String... args) {
    > 3. 触发ApplicationContextInitializer回调接口。ApplicationContextInitializer的实例在SpringApplication的实例化过程中已经初始化完成。先对所有ApplicationContextInitializer实例进行排序后再进行回调。
    > 4. SpringApplicationRunListener监听器广播contextPrepared事件。
    > 5. 向容器注册springBootBanner。
-   > 6. Spring容器设置是否运行覆盖Spring bean。此处this.allowBeanDefinitionOverriding属性还未读取配置源PropertySource中'spring.main.allow-bean-definition-overriding'的值，因此默认为false。
+   > 6. Spring容器设置是否运行覆盖Spring bean。此处this.allowBeanDefinitionOverriding属性还未读取属性源PropertySource中'spring.main.allow-bean-definition-overriding'的值，因此默认为false。
    > 6. 设置bean的懒加载模式。通过LazyInitializationBeanFactoryPostProcessor后置处理器，将容器中bean的符合条件的BeanDefinition设置为懒加载模式(lazyInit=false)。条件是指lazyInit=null，因此在Spring中bean默认为懒加载模式。
-   > 6. 加载所有Source配置源，采用不同方式对各种Source进行加载。配置源Source有两种添加方式，第一是默认的primarySources，Class类型，SpringApplication构造函数中的参数，一般是当前SpringBoot启动类。第二是通过SpringApplication#setSources手动配置。
+   > 6. 加载所有Source属性源，采用不同方式对各种Source进行加载。属性源Source有两种添加方式，第一是默认的primarySources，Class类型，SpringApplication构造函数中的参数，一般是当前SpringBoot启动类。第二是通过SpringApplication#setSources手动配置。
    > 6. SpringBoot广播器SpringApplicationRunListeners广播contextLoaded事件。
    
-9. 应用启动。调用Spring的refresh()方法启动容器。
+9. 应用启动，Spring通用启动流程。调用Spring的refresh()方法启动容器。
 
 10. 启动后置处理afterRefresh()。
 
@@ -366,6 +366,8 @@ Spring中常用工具类
 SimpleCommandLinePropertySource类的用法 可用作 输入参数的工具类。
 
 AbstractEnvironment#validateProfile校验profiles中单独指出不能以'!'开头的原因？
+
+PropertySources和Source是否一样，上述步骤8.8是否有问题，待确认。
 
 -------
 
