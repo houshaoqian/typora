@@ -33,21 +33,56 @@ Spring启动前的准备工作，主要包括Spring启动状态、启动时间�
 
 ## 3. 容器预设置
 
+​	预设置是指容器启动前配置一些标准化的特性，比如类加载器、SpEL表达式解析器、Bean后置处理器等。
+
+1. 指定当前容器应该使用的类加载器。如果未指定，按照以下优先级从高到低使用对应的类加载器。Thread.currentThread().getContextClassLoader() > ClassUtils.class.getClassLoader() > ClassLoader.getSystemClassLoader()。
+
+2. 指定SpEL表达式的解析类StandardBeanExpressionResolver。
+
+3. 向容器添加Bean后置处理器ApplicationContextAwareProcessor。ApplicationContextAwareProcessor类从本质上来讲是BeanPostProcessor的实现类，因此其角色是Bean的后置处理器BeanPostProcessor。从功能上来讲，其作用是实现Spring的Aware感知接口的功能组件之一。此处的Aware感知接口仅指以下6类及其子类：EnvironmentAware、EmbeddedValueResolverAware、ResourceLoaderAware、ApplicationEventPublisherAware、MessageSourceAware、ApplicationContextAware。
+
+4. 容器忽略一些指定类型Bean，主要是指一些Aware感知接口（比如EnvironmentAware，ApplicationContextAware等），忽略的原因是这些Bean有特别的角色定义，会在指定的地方进行特殊处理。
+
+5. 针对当前容器，给指定类型接口注入特定的实例。比如BeanFactory、ResourceLoader、ApplicationContext这三者代表不同的角色，但是当前应用上下文充当了这三个角色，因此只需要把当前对象this注入即可。
+
+   > Aware感知接口，顾名思义，Aware接口作用就是为了感知Spring特定内容的一类接口，其子类非常之多，比如上述的EnvironmentAware、EmbeddedValueResolverAware、ResourceLoaderAware、ApplicationEventPublisherAware、MessageSourceAware、ApplicationContextAware和web中的ServletContextAware、ServletConfigAware等。感知是指期望Spring在处理某一些类型的Bean时，将对应类型的Bean注入到该Aware中。比如ApplicationContextAware，如果你自定义的类实现了该接口，那么Spring会将ApplicationContext上下文注入到该类中。其实现的过程如下，1.需定义具体的感知接口和感知接口处理器。感知接口代码层面无限制，但为了知名达意，通常是Aware的子类。感知接口处理器必须是BeanPostProcessor的子类，只有实现了该类，在Bean被实例化后，才能够主动触发针对该Bean的特殊逻辑。
+
 ## 4. 容器初始化后设置
+
+​	AbstractApplicationContext#postProcessBeanFactory(beanFactory)模板方法，方法体为空。在容器预设置之后，如果当前应用上下文或者容器需要处理其他特殊逻辑的，可以在之类中对其进行扩展。比如在其子类AbstractRefreshableWebApplicationContext中，其扩展项包括以下几点：
+
+1. 添加Bean后置处理器ServletContextAwareProcessor，即ServletContext的感知接口功能实现类。
+2. 忽略ServletContextAware和ServletConfigAware类型的依赖关系，因为该类型为由上述步骤提供依赖关系。
+3. 注册Scope的几种实例(RequestScope,SessionScope,ServletContextScope)。
+4. 注册web类型的应用上下文特有的Environment环境contextParameters和contextAttributes。
 
 ## 5. 回调容器后置处理器
 
+​	Spring标准流程，回调BeanFactory后置处理器BeanFactoryPostProcessors。
+
 ## 6. 注册bean后置处理器
+
+​	Spring标准流程，从容器中筛选出所有BeanPostProcessor类型，如果该类同时是PriorityOrdered或者Ordered类型，则进行排序。然后分别将有序和无序的BeanPostProcessor添加到当前容器#beanPostProcessors集合中。
 
 ## 7. 初始化国际化
 
+​	Spring国际化是指对多语言的处理。
+
 ## 8. 初始化应用广播器
+
+​	Spring广播器ApplicationEventMulticaster是Spring事件通知机制的组件之一。负责下发Spring事件ApplicationEvent。首先判断容器中是否已经注册了名为“applicationEventMulticaster”的bean。如果没有，则new一个SimpleApplicationEventMulticaster类型充当事件广播器，并注册到当前容器中。
 
 ## 9. 刷新时
 
+​	模板方法，在子类AbstractRefreshableWebApplicationContext中主要完成了#themeSource的初始化。
+
 ## 10. 注册监听器
 
+​	Spring监听器ApplicationListener是Spring事件通知机制的组件之一。负责监听Spring事件。从数据结构上来讲，监听器是配置在AbstractApplicationContext#applicationListeners集合中的，但监听器是需要搭配广播器才能完成事件的广播的，因此需要将AbstractApplicationContext#applicationListeners中的监听器通过ApplicationEventMulticaster#addApplicationListener添加到广播器中。注册监听器的过程正是如此。
+
 ### 11. 完成容器初始化
+
+​	到目前为止，容器已经初始化，环境Environment、BeanDefinition和Bean后置处理器已经被加载到容器中，BeanFactory后置处理器已经回调完成，事件处理器也准备就绪。
 
 ### 12. 完成Spring的启动
 
