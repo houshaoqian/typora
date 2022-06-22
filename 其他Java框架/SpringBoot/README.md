@@ -309,7 +309,7 @@ public ConfigurableApplicationContext run(String... args) {
    > 5. 向容器注册springBootBanner。
    > 6. Spring容器设置是否运行覆盖Spring bean。此处this.allowBeanDefinitionOverriding属性还未读取属性源PropertySource中'spring.main.allow-bean-definition-overriding'的值，因此默认为false。
    > 6. 设置bean的懒加载模式。通过LazyInitializationBeanFactoryPostProcessor后置处理器，将容器中bean的符合条件的BeanDefinition设置为懒加载模式(lazyInit=false)。条件是指lazyInit=null，因此在Spring中bean默认为懒加载模式。
-   > 6. 加载所有Source属性源，采用不同方式对各种Source进行加载。属性源Source有两种添加方式，第一是默认的primarySources，Class类型，SpringApplication构造函数中的参数，一般是当前SpringBoot启动类。第二是通过SpringApplication#setSources手动配置。
+   > 6. 加载所有Source属性源，采用不同方式对各种Source进行加载。属性源Source有两种添加方式，第一是默认的primarySources，Class类型，SpringApplication构造函数中的参数，一般是当前SpringBoot启动类。第二是通过SpringApplication#setSources手动配置。到目前为止，Spring已经完成了Environment的初始化和BeanFactory的实例化，但是BeanFactory中只有SpringBoot添加的几个内部BeanDefinition的定义。此处加载Source的目的就是为了加载到自定义的BeanDefinition。比如加载primarySources就是为了将当前启动类加载到#beanDefinitionNames中。而该BeanDefinition是SpringBoot加载到所有自定义BeanDefinition的媒介。
    > 6. SpringBoot广播器SpringApplicationRunListeners广播contextLoaded事件。
    
 9. 应用启动，Spring通用启动流程。调用Spring的refresh()方法启动容器。
@@ -340,7 +340,23 @@ spring.factories文件：位于各个jar包的/META-INF文件下，可配置的�
 2. Ioc容器类：ApplicationContextInitializer、ApplicationListener。
 2. 其他类型：SpringBootExceptionReporter
 
+------
 
+**BeanDefinition加载流程**
+
+加载过程处在整个Spring流程中Spring标准启动流程#refresh()中的回调BeanFactory后置处理器#invokeBeanFactoryPostProcessors(beanFactory)时触发。
+
+ConfigurationClassPostProcessor是BeanDefinitionRegistryPostProcessor的子类，而BeanDefinitionRegistryPostProcessor是BeanFactoryPostProcessors的子类。在#invokeBeanFactoryPostProcessors()中触发#invokeBeanDefinitionRegistryPostProcessors函数。在invokeBeanDefinitionRegistryPostProcessors()中会遍历所有已加载的BeanDefinition，找出其中@Configuration类型的BeanDefinition。由于SpringBoot的启动类在之前的流程中已经被加载到#beanDefinitionNames中，且其也满足是@Configuration类型，因此通过获取其注解上的扫描相关的注解值（exclude/scanBasePackages等）获取到扫描路径等信息，完成BeanDefinition的扫描工作。
+
+SpringApplication#run()
+
+​	->SpringApplication#refreshContext(context)
+
+​		->((AbstractApplicationContext) applicationContext).refresh();
+
+AnnotationConfigServletWebServerApplicationContext#refresh();
+
+​	->AbstractApplicationContext#invokeBeanFactoryPostProcessors(beanFactory);
 
 ------
 
