@@ -44,3 +44,21 @@
 
 ## Spring核心启动流程
 
+传送门：[核心启动流程](./refresh.md)
+
+
+
+## Spring中的ApplicationEvent
+
+在Spring以及SpringBoot中，事件的UML类图如下：
+
+![Spring中事件](./images/ApplicationEventDependency.png)
+
+图中包含了四个顶级事件类型，分别是EventObject，是JDK定义的顶级事件类型，ApplicationEvent是Spring应用的顶级事件类型，ApplicationContextEvent是传统Spring项目中顶级事件类型，SpringApplicationEvent是SpringBoot项目中顶级事件类型。
+
+在SpringBoot核心流程启动中，Environment和BeanFactory的初始化是在Spring标准流程前进行的，也就是说ApplicationStartingEvent、ApplicationEnvironmentPreparedEvent、ApplicationContextInitializedEvent、ApplicationPreparedEvent事件的发生是在Spring标准启动流程（AbstractApplicationContext#refresh()）之前发生的，那么SpringBoot是如何将这四种事件进行广播的呢。
+
+> SpringApplicationRunListener是SpringBoot中顶级的事件监听器，其唯一的实现类是EventPublishingRunListener。EventPublishingRunListener中定义的SimpleApplicationEventMulticaster类型的变量，用于事件的广播，其中上述四种事件通过SimpleApplicationEventMulticaster#multicastEvent()方法进行广播，而后续的其他事件由于是在容器已经初始化完成后进行的，因此通过ConfigurableApplicationContext#publishEvent()方法进行广播。
+>
+> 
+
