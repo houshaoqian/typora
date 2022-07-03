@@ -60,5 +60,6 @@
 
 > SpringApplicationRunListener是SpringBoot中顶级的事件监听器，其唯一的实现类是EventPublishingRunListener。EventPublishingRunListener中定义的SimpleApplicationEventMulticaster类型的变量，用于事件的广播，其中上述四种事件通过SimpleApplicationEventMulticaster#multicastEvent()方法进行广播，而后续的其他事件由于是在容器已经初始化完成后进行的，因此通过ConfigurableApplicationContext#publishEvent()方法进行广播。
 >
-> 
+
+
 
