@@ -145,3 +145,24 @@ spec:
 
 静态Pod并没有保存在k8s的etcd里，而是被存在特定的Node上，并且只在此Node上启动运行。该类型Pod不能通过k8s的API进行管理，无法与ReplicationController、Deployment或者DaemonSet进行关联，并且kubelet无法对他们进行健康检查。静态Pod总是由kubelet创建的，并且总在kubelet所在的Node上运行。
 
+## Pod的生命周期
+
+
+
+### Pod的状态
+
+**Pending**：API Server已创建该Pod，但在Pod内还有一个或者多个容器的镜像没有，包括正在下载镜像的过程。
+
+**Running**：Pod内所有容器均已创建，且至少有一个容器处于运行状态，正在启动状态或正在重启状态。
+**Succeeded**：Pod内所有容器均成功执行后退出，且不会再重启。
+
+**Failed**：Pod内所有容器均已退出，但至少有一个容器退出为失败状态。
+
+**Unknown**：由于某种原因，无法获取该Pod状态，可能由于网络等原因。
+
+
+
+### Pod的重启策略
+
+
+
