@@ -43,7 +43,27 @@
    docker rmi redis
    ~~~
 
-   
+5. 创建本地镜像
+
+   1. 编辑docker定义文件 `vim Dockerfile`
+
+      ~~~shell
+      FROM openjdk:8-jdk
+      VOLUME /tmp
+      ADD tjdk.jar tjdk.jar
+      EXPOSE 80
+      # RUN sh -c 'touch /app.jar'
+      ENTRYPOINT ["java","-jar","/tjdk.jar"]
+      ~~~
+
+   2. 生成本地镜像`docker build -f Dockerfile -t tjdk:v1.0 `
+
+      ~~~shell
+      # -f 指定docker配置文件 -t 指定镜像名称和版本
+      docker build -f Dockerfile -t tjdk:v1.0
+      ~~~
+
+      
 
 # 容器
 
@@ -120,5 +140,3 @@
    # 导入容器快照，将上述的镜像文件导入到本地镜像库中
    cat redis-signle.tar |sudo docker import - redisbak:1
    ~~~
-
-   

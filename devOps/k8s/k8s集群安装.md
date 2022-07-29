@@ -289,3 +289,19 @@ kube-scheduler-centos01                    1/1     Running    0          26m   1
 
 
 
+## ingress-nginx安装
+
+github地址：[ingress-nginx](https://github.com/kubernetes/ingress-nginx)
+
+[(170条消息) k8s之ingress介绍与实施_江南道人的博客-CSDN博客_ingress 集群](https://blog.csdn.net/huahua1999/article/details/124237412)
+
+# Rancher 安装
+
+密码：hsq12345678910
+
+| Name:     | Default Admin  |
+| --------- | -------------- |
+| Username: | admin          |
+| Type:     | Local          |
+| Password  | hsq12345678910 |
+
