@@ -41,6 +41,9 @@
    ~~~shell
    # 删除本地redis镜像文件
    docker rmi redis
+   
+   # -f 强制删除镜像
+   docker rmi -f redis
    ~~~
 
 5. 创建本地镜像
@@ -56,14 +59,26 @@
       ENTRYPOINT ["java","-jar","/tjdk.jar"]
       ~~~
 
-   2. 生成本地镜像`docker build -f Dockerfile -t tjdk:v1.0 `
+   2. 生成本地镜像`docker build -f Dockerfile -t tjdk:v1.0 .  `
 
       ~~~shell
       # -f 指定docker配置文件 -t 指定镜像名称和版本
-      docker build -f Dockerfile -t tjdk:v1.0
+      docker build -f Dockerfile -t tjdk:v1.0 .
       ~~~
 
-      
+6. 标记本地镜像，将其归入某一仓库。
+
+   `docker tag  name[:version]  [registryhost/][username/]name[:version]` 
+
+   格式：`docker tag  本地镜像名[:版本]  [私服地址/][私服用户名/镜像名称[:版本]`
+
+   ```shell
+   docker tag [OPTIONS] IMAGE[:TAG] [REGISTRYHOST/][USERNAME/]NAME[:TAG]
+   ```
+
+   
+
+
 
 # 容器
 
@@ -133,10 +148,32 @@
 
    cat <文件路径> | docker import  - <镜像名称:版本> 中间符号"-"不能省略
 
-   ~~~she
+   ~~~shell
    # 导出容器
    docker export redis>redis.tar
    
    # 导入容器快照，将上述的镜像文件导入到本地镜像库中
    cat redis-signle.tar |sudo docker import - redisbak:1
    ~~~
+
+
+
+# docker-compose
+
+~~~shell
+# 下载文件
+curl -L https://get.daocloud.io/docker/compose/releases/download/1.26.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose -k
+
+# 添加执行权限
+chmod +x /usr/local/bin/docker-compose
+
+# 创建软连接
+ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+# 验证/查看版本
+docker-compose version
+
+~~~
+
+
+

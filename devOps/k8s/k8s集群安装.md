@@ -4,11 +4,11 @@
 
 宿主机是win10，利用win10的hyper-v搭建了三台centos7虚拟机。
 
-| ip            | 主机名   | 备注         |
-| ------------- | -------- | ------------ |
-| 172.21.64.101 | centos01 | 主节点master |
-| 172.21.64.102 | centos02 | worker节点   |
-| 172.21.64.103 | centos03 | worker节点   |
+| ip            | 主机名   | 备注                  |
+| ------------- | -------- | --------------------- |
+| 172.21.64.101 | centos01 | 主节点master，rancher |
+| 172.21.64.102 | centos02 | worker节点，          |
+| 172.21.64.103 | centos03 | worker节点            |
 
 
 
@@ -304,4 +304,94 @@ github地址：[ingress-nginx](https://github.com/kubernetes/ingress-nginx)
 | Username: | admin          |
 | Type:     | Local          |
 | Password  | hsq12345678910 |
+
+
+
+## 搭建harbor私有仓库
+
+~~~shell
+# 下载安装包
+wget https://github.com/goharbor/harbor/releases/download/v2.3.5/harbor-offline-installer-v2.3.5.tgz
+
+# 解压
+tar xf harbor-offline-installer-v2.3.5.tgz -C /usr/local/
+
+# 修改默认配置 (主机名称 密码 注释ssl选项)
+vim /usr/local/harbor/harbor.yml
+
+# 安装harbor
+./usr/local/harbor/install.sh
+
+# 设置开启启动，编辑rc.local添加行
+vim /etc/rc.local
+# 添加行
+./usr/local/harbor/docker-compose start
+~~~
+
+harbor.yml文件内容
+
+~~~yaml
+# Configuration file of Harbor
+
+# The IP address or hostname to access admin UI and registry service.
+# DO NOT use localhost or 127.0.0.1, because Harbor needs to be accessed by external clients.
+hostname: 172.21.64.102
+
+# http related config
+http:
+  # port for http, default is 80. If https enabled, this port will redirect to https port
+  port: 80
+
+# https related config
+#https:
+  # https port for harbor, default is 443
+#  port: 443
+  # The path of cert and key files for nginx
+# certificate: /your/certificate/path
+# private_key: /your/private/key/path
+
+# # Uncomment following will enable tls communication between all harbor components
+# internal_tls:
+#   # set enabled to true means internal tls is enabled
+#   enabled: true
+#   # put your cert and key files on dir
+#   dir: /etc/harbor/tls/internal
+
+# Uncomment external_url if you want to enable external proxy
+# And when it enabled the hostname will no longer used
+# external_url: https://reg.mydomain.com:8433
+
+# The initial password of Harbor admin
+# It only works in first time to install harbor
+# Remember Change the admin password from UI after launching Harbor.
+harbor_admin_password: Harbor12345
+
+# Harbor DB configuration
+~~~
+
+
+
+##  Rancher连接Harbor私有仓库
+
+推荐安装方式： 先安装Rancher再通过Rancher安装Harbor
+
+本次安装的时候，是两者独立安装后，再进行关联的。
+
+在rancher页面上，选中指定 集群 -> 命名空间 -> 执行命令。
+
+~~~shell
+# secret-harbor: secret名称，namespace：指定的命名空间
+# docker-server：harbor服务地址
+# docker-username：harbor登录名
+# docker-password：harbor登录密码
+kubectl create secret docker-registry secret-harbor --namespace=ingress-nginx \
+--docker-server=https://harbor.qiriver.com --docker-username=admin \
+--docker-password=Harbor12345 --docker-email=qiriver@163.com
+~~~
+
+在rancher中创建服务时，镜像配置指定镜像私服地址和镜像拉取秘钥(命令中创建的secret docker-registry名称 secret-harbor)。
+
+~~~yaml
+
+~~~
 
