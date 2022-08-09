@@ -52,7 +52,9 @@ get-netnat
 remove-netnat k8sNAT
 ~~~
 
-
+> 出现宿主机能连接上虚拟机，但是虚拟机却连接不到外网，关闭宿主机的的网络共享（宿主机网络共享给虚拟机的交换机）时，导致宿主机连接不上虚拟机，但虚拟机却可以连接上外网。
+>
+> QA:[Hyper-V 网络配置学习 (360doc.com)](http://www.360doc.com/content/22/0417/09/73220646_1026899501.shtml)
 
 
 
@@ -259,13 +261,3 @@ ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 # 验证/查看版本
 docker-compose version
 ~~~
-
-
-
-## 问题1
-
-1. 出现宿主机能连接上虚拟机，但是虚拟机却连接不到外网，关闭宿主机的的网络共享（宿主机网络共享给虚拟机的交换机）时，导致宿主机连接不上虚拟机，但虚拟机却可以连接上外网。
-
-   QA:[Hyper-V 网络配置学习 (360doc.com)](http://www.360doc.com/content/22/0417/09/73220646_1026899501.shtml)
-
-2. 

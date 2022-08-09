@@ -158,5 +158,36 @@
 
 
 
+# docker国内镜像源
 
+~~~shell
+# 修改/创建 docker配置
+vim /etc/docker/daemon.json
+
+# 重启docker服务
+systemctl restart docker.service
+~~~
+
+> ~~~json
+> {
+>         "registry-mirrors": [
+>                 "https://o497lg9s.mirror.aliyuncs.com",
+>                 "https://registry.docker-cn.com",
+>                 "https://docker.mirrors.ustc.edu.cn",
+>                 "http://hub-mirror.c.163.com",
+>                 "https://cr.console.aliyun.com/"
+>         ]
+> }
+> ~~~
+>
+> /etc/docker/daemon.json文件内容
+
+
+
+# 安装rancher2服务
+
+~~~shell
+# 安装rancher服务2.2.13版本
+docker run -d --privileged --restart=unless-stopped -p 80:80 -p 443:443 rancher/rancher:v2.2.13
+~~~
 
