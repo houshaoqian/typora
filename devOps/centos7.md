@@ -7,8 +7,6 @@ hostnamectl set-hostname centos01
 
 
 
-
-
 # 静态IP
 
 1. `vim /etc/sysconfig/network-scripts/ifcfg-eth0`其中eth0代表网卡id，不同机器id不同，配置如下：
@@ -36,6 +34,25 @@ DNS1=172.21.64.1
 ~~~
 
 2. 重启网卡 `systemctl restart network`
+
+
+
+# Hyper-v 内部网络
+
+利用hyper-v搭建虚拟机时，网络类型为'内部网络'时，物理机和虚拟机互相联通，但虚拟机访问不了互联网的解决方案。
+
+~~~shell
+# 在宿主机中创建NAT规则，即在物理机(win10)上执行如下命令即可，其中k8sNAT为自定义规则名称
+New-NetNat -Name k8sNAT -InternalIPInterfaceAddressPrefix 172.21.64.0/24
+
+# 相关命令 查看已存在的NAT规则
+get-netnat
+
+# 相关命令 删除已存在的NAT规则，其中k8sNAT为自定义规则名称
+remove-netnat k8sNAT
+~~~
+
+
 
 
 
@@ -137,7 +154,52 @@ yum search [keyword]
 
 # 清楚缓存 all指 packages和headers
 yum clean [all]
+
 ~~~
+
+
+
+### yum更新源
+
+~~~shell
+# 备份
+cd /etc/yum.repos.d/
+mkdir bak
+mv *.repo bak/
+
+# 下载阿里云镜像文件
+wget http://mirrors.aliyun.com/repo/Centos-7.repo
+
+# 清除缓存
+yum clean all
+yum makecache
+
+# 安装EPEL
+yum install -y epel-release
+
+# 清除&生成 缓存
+yum clean all
+yum makecache
+
+# 查看启用的yum源和所有的yum源
+yum repolist enabled
+yum repolist all
+
+# 更新yum
+yum -y update
+
+~~~
+
+
+
+
+
+# 开机启动
+
+方法一：
+
+1. 启动命令直接或间接追加到`/etc/rc.d/rc.local`文件中。
+2. centos7默认取消了rc.local文件的执行权限，因此需要添加执行权限。`chmod +x /etc/rc.d/rc.local`。
 
 
 
@@ -149,9 +211,54 @@ yum clean [all]
 
 
 
+# centos7安装docker
+
+~~~shell
+# 查看当前内核版本，官方建议 3.10 以上，3.8以上貌似也可。
+# 如果满足版本，则无需更新yum包
+uname -r
+# 使用 root 权限更新 yum 包, 生产环境中此步操作需慎重，看自己情况，学习的话随便搞）
+yum -y update
+# 如需卸载旧版本
+yum remove docker  docker-common docker-selinux docker-engine
+
+# 开始依赖软件包
+# yum-util 提供yum-config-manager功能，另两个是devicemapper驱动依赖
+yum install -y yum-utils device-mapper-persistent-data lvm2
+
+# 设置阿里云镜像
+yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+# 查看可用docker版本
+yum list docker-ce --showduplicates | sort -r
+
+# 安装指定版本
+yum -y install docker-ce-3:20.10.9-3.el7
+
+# 默认docker为启动状态，无需后续处理
+# 启动docker
+systemctl start docker
+# 设置开机启动
+systemctl enable docker
+~~~
 
 
-[centos7安装k8s](https://blog.csdn.net/qq_37481017/article/details/118897138)
+
+# 安装docker-compose
+
+~~~shell
+# 下载文件
+curl -L https://get.daocloud.io/docker/compose/releases/download/1.26.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose -k
+
+# 添加执行权限
+chmod +x /usr/local/bin/docker-compose
+
+# 创建软连接
+ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+# 验证/查看版本
+docker-compose version
+~~~
 
 
 

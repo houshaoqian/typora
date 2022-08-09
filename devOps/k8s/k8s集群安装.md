@@ -10,6 +10,15 @@
 | 172.21.64.102 | centos02 | worker节点，          |
 | 172.21.64.103 | centos03 | worker节点            |
 
+Pods
+
+| 名称         | 集群ip        | Pod IP                    | 开放端口 |
+| ------------ | ------------- | ------------------------- | -------- |
+| zookeeper    | 10.106.87.177 | 10.10.66.32               | 2181     |
+| kafka-server | 10.111.146.61 | 10.10.66.31               | 9092     |
+| tjdk02       | 10.99.8.170   | 10.10.178.173/10.10.66.24 |          |
+|              |               |                           |          |
+
 
 
 ### 查看k8s可用版本
@@ -392,6 +401,12 @@ kubectl create secret docker-registry secret-harbor --namespace=ingress-nginx \
 在rancher中创建服务时，镜像配置指定镜像私服地址和镜像拉取秘钥(命令中创建的secret docker-registry名称 secret-harbor)。
 
 ~~~yaml
-
+spec:
+    affinity: {}
+    containers:
+    - image: harbor.qiriver.com/repo/tjdk-harbor:v1.0
+    imagePullPolicy: IfNotPresent
+    name: container-0
+    resources: {}
 ~~~
 
