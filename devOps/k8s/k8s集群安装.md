@@ -4,11 +4,12 @@
 
 宿主机是win10，利用win10的hyper-v搭建了三台centos7虚拟机。
 
-| ip            | 主机名   | 备注                  |
-| ------------- | -------- | --------------------- |
-| 172.21.64.101 | centos01 | 主节点master，rancher |
-| 172.21.64.102 | centos02 | worker节点，          |
-| 172.21.64.103 | centos03 | worker节点            |
+| ip            | 主机名    | 备注                       |
+| ------------- | --------- | -------------------------- |
+| 172.21.64.101 | centos101 |                            |
+| 172.21.64.102 | centos102 | rancher-server,            |
+| 172.21.64.103 | centos103 | k8s-worker                 |
+| 172.21.64.104 | centos103 | k8s-all(etcd,panel,worker) |
 
 Pods
 
@@ -18,6 +19,78 @@ Pods
 | kafka-server | 10.111.146.61 | 10.10.66.31               | 9092     |
 | tjdk02       | 10.99.8.170   | 10.10.178.173/10.10.66.24 |          |
 |              |               |                           |          |
+
+
+
+## 安装前准备
+
+~~~shell
+# 关闭防火墙
+systemctl stop firewalld.service
+systemctl disable firewalld.service
+
+# 关闭SElinux
+setenforce 0
+sed -i 's/^ *SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+
+# 禁止swap内存交换
+swapoff -a
+sed -i.bak '/swap/s/^/#/' /etc/fstab
+~~~
+
+## 修改yum源
+
+~~~shell
+vim /etc/yum.repos.d/kubernetes.repo
+~~~
+
+kubernetes.repo文件内容
+
+~~~txt
+[kubernetes]
+name=Kubernetes
+baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=0
+repo_gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
+       https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+~~~
+
+更新源
+
+~~~shell
+yum clean all
+yum -y makecache
+~~~
+
+
+
+## docker修改镜像地址为国内镜像地址
+
+~~~shell
+vim /etc/docker/daemon.json
+~~~
+
+daemon.json
+
+~~~json
+{
+        "registry-mirrors": [
+                "https://o497lg9s.mirror.aliyuncs.com",
+                "https://registry.docker-cn.com",
+                "https://docker.mirrors.ustc.edu.cn",
+                "http://hub-mirror.c.163.com",
+                "https://cr.console.aliyun.com/"
+        ]
+}
+~~~
+
+~~~shell
+# 重启docker
+systemctl daemon-reload
+systemctl restart docker
+~~~
 
 
 
@@ -101,7 +174,7 @@ chmod +x pull_k8s_images.sh
 
 ### 配置集群网络，指定master节点
 
-在主节点centos01上执行以下命令。其中--kubernetes-version指定k8s版本(上面脚本拉取的镜像)，当未执行上述`pull_k8s_images.sh`脚本时，该命令在尝试拉取指定镜像时会从官方仓库拉取导致超时。
+在主节点centos102上执行以下命令。其中--kubernetes-version指定k8s版本(上面脚本拉取的镜像)，当未执行上述`pull_k8s_images.sh`脚本时，该命令在尝试拉取指定镜像时会从官方仓库拉取导致超时。
 **注意：该命令输出的最后为加该k8s集群的token，需要额外保存。**
 
 ~~~shell
@@ -306,17 +379,84 @@ github地址：[ingress-nginx](https://github.com/kubernetes/ingress-nginx)
 
 # Rancher 安装
 
-密码：hsq12345678910
+密码：Abc1234567890
 
-| Name:     | Default Admin  |
-| --------- | -------------- |
-| Username: | admin          |
-| Type:     | Local          |
-| Password  | hsq12345678910 |
+~~~shell
+docker run -d --privileged --restart=unless-stopped \
+  --name rancher-rancher \
+  -p 8081:80 -p 4431:443 \
+  -e NO_PROXY="localhost,127.0.0.1,0.0.0.0,10.0.0.0/8,172.21.64.0/24" \
+  -v /etc/docker/rancher/ssl:/ssl/certs \
+  -e SSL_CERT_DIR="/ssl/certs" \
+  rancher/rancher:latest
+~~~
+
+
+
+| Name:     | Default Admin |
+| --------- | ------------- |
+| Username: | admin         |
+| Type:     | Local         |
+| Password  | Abc1234567890 |
 
 
 
 ## 搭建harbor私有仓库
+
+创建自签发SSL
+
+~~~shell
+root@Harbor:/usr/local/harbor# mkdir /usr/local/harbor/certs
+root@Harbor:/usr/local/harbor# cd certs/
+
+#创建CA私钥
+root@Harbor:/usr/local/harbor/certs# openssl genrsa -out ca.key 4096
+
+#自签名机构生成CA证书
+root@Harbor:/usr/local/harbor/certs# openssl req -x509 -new -nodes -sha512 -days 3650 \
+-subj "/C=CN/ST=Jangsu/L=Nanjing/O=example/OU=Personal/CN=172.21.64.102" \
+-key ca.key \
+-out ca.crt
+
+#参数说明：
+## C，Country，代表国家
+## ST，STate，代表省份
+## L，Location，代表城市
+## O，Organization，代表组织，公司
+## OU，Organization Unit，代表部门
+## CN，Common Name，代表服务器域名
+## emailAddress，代表联系人邮箱地址。
+
+#客户端私钥证书生成
+root@Harbor:/usr/local/harbor/certs# openssl genrsa -out 172.21.64.102.key 4096
+
+root@Harbor:/usr/local/harbor/certs# openssl req -sha512 -new \
+-subj "/C=CN/ST=Jangsu/L=Nanjing/O=example/OU=Personal/CN=172.21.64.102" \
+-key 172.21.64.102.key \
+-out 172.21.64.102.csr
+
+#生成多个域名请求
+cat > v3.ext <<-EOF
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1=172.21.64.102
+EOF
+
+#使用自签名CA签发证书
+root@Harbor:/usr/local/harbor/certs# openssl x509 -req -sha512 -days 3650 \
+-extfile v3.ext \
+-CA ca.crt -CAkey ca.key -CAcreateserial \
+-in 172.21.64.102.csr \
+-out 172.21.64.102.crt
+
+~~~
+
+
 
 ~~~shell
 # 下载安装包
@@ -329,6 +469,7 @@ tar xf harbor-offline-installer-v2.3.5.tgz -C /usr/local/
 vim /usr/local/harbor/harbor.yml
 
 # 安装harbor
+./usr/local/harbor/prepare
 ./usr/local/harbor/install.sh
 
 # 设置开启启动，编辑rc.local添加行
@@ -349,15 +490,15 @@ hostname: 172.21.64.102
 # http related config
 http:
   # port for http, default is 80. If https enabled, this port will redirect to https port
-  port: 80
+  port: 8081
 
 # https related config
-#https:
+https:
   # https port for harbor, default is 443
-#  port: 443
+  port: 4431
   # The path of cert and key files for nginx
-# certificate: /your/certificate/path
-# private_key: /your/private/key/path
+ certificate: /your/certificate/path
+ private_key: /your/private/key/path
 
 # # Uncomment following will enable tls communication between all harbor components
 # internal_tls:
