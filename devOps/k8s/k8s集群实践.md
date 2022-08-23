@@ -95,6 +95,13 @@ systemctl restart docker
 
 
 
+## 生成自签名证书
+
+一键生成ssl自签名证书脚本：
+[create_self-signed-cert.sh]: ./resources/create_self-signed-cert.md
+
+[create_self-signed-cert.sh]: ./resources/create_self-signed-cert.sh
+
 
 
 
