@@ -191,3 +191,35 @@ systemctl restart docker.service
 docker run -d --privileged --restart=unless-stopped -p 80:80 -p 443:443 rancher/rancher:v2.2.13
 ~~~
 
+
+
+# 安装ftp
+
+~~~shell
+# 需提前创建宿主机映射目录
+docker run -d \
+-v /var/ftp:/home/vsftpd \
+-p 20:20 \
+-p 21:21 \
+-p  21100-21110:21100-21110 \
+-e FTP_USER=test \
+-e FTP_PASS=test \
+-e PASV_ADDRESS=39.104.70.67 \
+-e PASV_MIN_PORT=21100 \
+-e PASV_MAX_PORT=21110 \
+-e LOCAL_UMASK=022 \
+--name vsftpd --restart=always fauria/vsftpd
+~~~
+
+
+
+# 安装sftp
+
+~~~shell
+docker run -d -p 22:22 --name docker_sftpd \
+-v /var/sftp/etc/user.conf:/etc/sftp/users.conf:ro \
+-v /var/sftp/etc/data:/home \
+--privileged=true \
+atmoz/sftp
+~~~
+

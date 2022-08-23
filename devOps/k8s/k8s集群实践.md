@@ -4,23 +4,21 @@
 
 宿主机是win10，利用win10的hyper-v搭建了三台centos7虚拟机。
 
-| ip            | 主机名    | 备注                       |
-| ------------- | --------- | -------------------------- |
-| 172.21.64.101 | centos101 |                            |
-| 172.21.64.102 | centos102 | rancher-server,harbor,     |
-| 172.21.64.103 | centos103 | k8s-worker                 |
-| 172.21.64.104 | centos103 | k8s-all(etcd,panel,worker) |
+| ip            | 主机名    | 备注 |
+| ------------- | --------- | ---- |
+| 172.21.64.201 | centos201 |      |
+| 172.21.64.202 | centos201 |      |
+| 172.21.64.203 | centos203 |      |
 
-Pods
+三台虚拟主机host
 
-| 名称         | 集群ip        | Pod IP                    | 开放端口 |
-| ------------ | ------------- | ------------------------- | -------- |
-| zookeeper    | 10.106.87.177 | 10.10.66.32               | 2181     |
-| kafka-server | 10.111.146.61 | 10.10.66.31               | 9092     |
-| tjdk02       | 10.99.8.170   | 10.10.178.173/10.10.66.24 |          |
-|              |               |                           |          |
-
-
+~~~properties
+172.21.64.201 rancher.k8s
+172.21.64.201 harbor.k8s
+172.21.64.201 centos201
+172.21.64.202 centos202
+172.21.64.203 centos203
+~~~
 
 ## 安装前准备
 
@@ -52,7 +50,7 @@ name=Kubernetes
 baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64
 enabled=1
 gpgcheck=0
-repo_gpgcheck=1
+repo_gpgcheck=0
 gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
        https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
 ~~~
@@ -74,8 +72,11 @@ vim /etc/docker/daemon.json
 
 daemon.json
 
+其中，"https://harbor.k8s:4431"为虚拟机中安装的harbor私有仓库，因为是自签名证书，因此需要添加到可信任列表中。
+
 ~~~json
 {
+        "insecure-registries":["https://harbor.k8s:4431"],
         "registry-mirrors": [
                 "https://o497lg9s.mirror.aliyuncs.com",
                 "https://registry.docker-cn.com",
@@ -91,6 +92,10 @@ daemon.json
 systemctl daemon-reload
 systemctl restart docker
 ~~~
+
+
+
+
 
 
 
