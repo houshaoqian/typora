@@ -17,8 +17,8 @@ tar -zxvf nginx-1.20.2.tar.gz
 #进入nginx目录
 cd ./nginx-1.20.2
 
-# 配置nginx prefix：安装目录
-./configure --prefix=/usr/local/nginx
+# 配置nginx prefix：安装目录 安装ssl模块
+./configure --prefix=/usr/local/nginx --with-http_stub_status_module --with-http_ssl_module
 
 # 编译
 make
