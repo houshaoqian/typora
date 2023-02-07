@@ -12,10 +12,10 @@ docker run \
 
 
 docker run \
--p 3307:3306 --name mysql-signle3307 \
+-p 3306:3306 --name mysql \
 -e MYSQL_ROOT_PASSWORD=123456 \
 --restart always \
--d mysql:5.7
+-d mysql
 
 ~~~
 

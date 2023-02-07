@@ -18,23 +18,48 @@ Title: 一次网络I/O流程图
 
 participant Client as 客户端
 participant Net as 网卡
-participant Core as 内核
+participant Kernel as 内核
 participant Process as 进程
 
 Client ->> Net:①发起请求
-Net --x Core:②复制数据到内核缓冲区(异步)
-Core ->> Process:③复制数据到用户进程缓冲区
+Net --x Kernel:②复制数据到内核缓冲区(异步)
+Kernel ->> Process:③复制数据到用户进程缓冲区
 
 Note left of Net : 内核通过驱动完成对网卡的读写操作。
-Note left of Core : 当网卡有数据读入时，通过中断通知操作系统。
+Note left of Kernel : 当网卡有数据读入时，通过中断通知操作系统。
 Note left of Process : 用户进程的I/O操作，本质是系统调用，切换为内核态后，
 Note left of Process : 由操作系统完成数据从内核缓冲区到进程缓冲区的复制。
 
-Process ->> Core:④系统调用，写数据到内核缓冲区(异步)
-Core --x Net:⑤内核态，复制数据到网卡
+Process ->> Kernel:④系统调用，写数据到内核缓冲区(异步)
+Kernel --x Net:⑤内核态，复制数据到网卡
 Net ->> Client:⑥对客户端进行响应
 
 
 ~~~
 
-在一次完整的I/O 操作中，Java能控制的步骤只有③和④。
+
+
+## 五种I/O模型
+
+​	I/O模型通常根据 **阻塞/非阻塞** 和 **同步/异步** 两个方面进行分类。阻塞/非阻塞是指用户进程在等待读/写时，用户进程是否处于阻塞状态。
+
+同步/异步通常是指在整个I/O流程中，占据主导作用（最终发起I/O请求、或者对数据就绪状态的监控）的是用户进程还是内核进程。
+
+###  一、 同步阻塞I/O
+
+​	
+
+### 二、同步非阻塞
+
+
+
+### 三、I/O多路复用
+
+
+
+### 四、异步I/O
+
+
+
+
+
